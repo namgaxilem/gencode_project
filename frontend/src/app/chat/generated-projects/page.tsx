@@ -2,11 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-
-const API_BASE =
-  import.meta?.env?.VITE_API_BASE ||
-  process.env.REACT_APP_API_BASE ||
-  "http://localhost:8000/api";
+import { HTTP_API_BASE } from "@/app/config/constants";
 
 export default function GeneratedProjects() {
   const [data, setData] = useState([]);
@@ -18,7 +14,7 @@ export default function GeneratedProjects() {
     setLoading(true);
     setErr("");
     try {
-      const res = await axios.get(`${API_BASE}/projects`, {
+      const res = await axios.get(`${HTTP_API_BASE}/projects`, {
         params: { limit: 200, q: q || undefined },
         signal,
       });
@@ -165,7 +161,7 @@ export default function GeneratedProjects() {
                         <div className="flex items-center gap-3">
                           <a
                             target="_blank"
-                            href={`${API_BASE}/projects/${row.id}/download`}
+                            href={`${HTTP_API_BASE}/projects/${row.id}/download`}
                             className="rounded-lg border px-3 py-1 text-xs hover:bg-gray-100"
                           >
                             Download ZIP

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { FaPlus } from "react-icons/fa";
+import { WS_API_BASE } from "../config/constants";
 
 const sampleHistory = [
   "Configuring ACM for DDNS",
@@ -19,7 +20,7 @@ export default function Chatbot() {
 
   // Kết nối WebSocket khi load component
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8000/ws/chat");
+    const socket = new WebSocket(`${WS_API_BASE}/ws/chat`);
     wsRef.current = socket;
 
     socket.onmessage = (event) => {

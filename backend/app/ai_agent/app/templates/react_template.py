@@ -4,6 +4,7 @@ import tempfile
 from datetime import datetime
 
 from app.ai_agent.app.utils.write_file import write_file
+from app.ai_agent.app.utils.db import insert_generated_project  # ⬅️ thêm import
 
 
 async def generate_react_project(instruction: str) -> str:
@@ -45,7 +46,7 @@ Yêu cầu:
     except Exception as e:
         return f"Lỗi parse JSON từ OpenAI: {e}"
 
-    # 4) Tạo container folder + subfolder theo timestamp (ms)
+    # 1) Tạo container folder + subfolder theo timestamp (ms)
     base_dir = Path(tempfile.gettempdir()) / "react_project"
     base_dir.mkdir(exist_ok=True)
 
@@ -54,12 +55,32 @@ Yêu cầu:
     project_dir = base_dir / f"react_project_{timestamp}"
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    # Ghi từng file vào subfolder
+    # 2) (tuỳ chọn) lấy tên project từ package.json trước khi ghi
+    project_name = None
+    for f in files:
+        if f.get("path") == "package.json":
+            try:
+                pkg = json.loads(f.get("content", "{}"))
+                if isinstance(pkg, dict) and isinstance(pkg.get("name"), str):
+                    project_name = pkg["name"].strip() or None
+            except Exception:
+                pass
+
+    # 3) Ghi từng file vào subfolder
     for file in files:
         path = project_dir / file["path"]
         path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Nếu write_file là async -> dùng await; nếu là sync -> bỏ await
         await write_file(path=str(path), content=file["content"])
 
-    return f"React project generated at {project_dir} with {len(files)} files."
+    # 4) Insert DB sau khi ghi xong
+    final_name = project_name or project_dir.name
+    record_id = await insert_generated_project(
+        name=final_name,
+        resource_path=str(project_dir),
+        created_by="agent",
+    )
+
+    return (
+        f"React project generated at {project_dir} with {len(files)} files. "
+        f"DB record id={record_id}"
+    )
