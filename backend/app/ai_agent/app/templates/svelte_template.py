@@ -25,8 +25,8 @@ def write_file(path: str, content: str) -> str:
     except Exception as e:
         return f"Error writing file {path}: {str(e)}"
 
-async def generate_react_project(instruction: str) -> str:
-    print("[DEBUG] Generating React project with instruction:", instruction)
+async def generate_svelte_project(instruction: str) -> str:
+    print("[DEBUG] Generating Svelve project with instruction:", instruction)
     """
     Tạo project React dựa trên yêu cầu user,
     nhờ OpenAI sinh nội dung file và dùng MCP tool write_file để ghi ra.
@@ -67,7 +67,7 @@ Yêu cầu:
     # 4. Ghi từng file ra (ở thư mục temp)
     from pathlib import Path
     import tempfile
-    temp_dir = Path(tempfile.gettempdir()) / "react_project"
+    temp_dir = Path(tempfile.gettempdir()) / "svelte_project"
     temp_dir.mkdir(exist_ok=True)
 
     for file in files:

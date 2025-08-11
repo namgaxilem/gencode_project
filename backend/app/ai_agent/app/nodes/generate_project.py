@@ -1,12 +1,12 @@
-import asyncio
-from ai_agent.app.templates.react_template import generate_react_project
-from ai_agent.app.templates.vue_template import generate_vue_project
-from ai_agent.app.templates.svelte_template import generate_svelte_project
+from app.ai_agent.app.templates.react_template import generate_react_project
+from app.ai_agent.app.templates.vue_template import generate_vue_project
+from app.ai_agent.app.templates.svelte_template import generate_svelte_project
+
 
 async def generate_project_node(state):
     print("[DEBUG] Generating project with state:", state)
     framework = state.get("framework", "").lower()
-    
+
     if framework == "react":
         print("[DEBUG] Generating React project")
         output = await generate_react_project(state["input"])

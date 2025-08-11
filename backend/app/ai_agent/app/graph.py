@@ -2,10 +2,10 @@
 
 from typing import TypedDict
 from langgraph.graph import StateGraph
-from ai_agent.app.nodes.input_check import input_check_node
-from ai_agent.app.nodes.confirm_framework import confirm_framework_node
-from ai_agent.app.nodes.generate_project import generate_project_node
-from ai_agent.app.nodes.end_node import end_node
+from app.ai_agent.app.nodes.input_check import input_check_node
+from app.ai_agent.app.nodes.confirm_framework import confirm_framework_node
+from app.ai_agent.app.nodes.generate_project import generate_project_node
+from app.ai_agent.app.nodes.end_node import end_node
 
 class AgentState(TypedDict):
     input: str

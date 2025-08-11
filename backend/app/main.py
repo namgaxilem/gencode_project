@@ -1,32 +1,31 @@
-# main.py
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-import asyncio
+# app/main.py
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+from app.api.routers.chat import router as chat_router
+from app.api.routers.projects import router as projects_router
 
-from ai_agent.app.graph import run_agent
+from app.db.database import Base, engine
 
 app = FastAPI()
+app.include_router(chat_router)
+app.include_router(projects_router)
 
-@app.websocket("/ws/chat")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    try:
-        while True:
-            # Receive message from client
-            data = await websocket.receive_text()
-            try:
-                # Call LangGraph agent (async)
-                reply = await run_agent(data)
-            except Exception as e:
-                # Don't close the socket; return a friendly error
-                # (Log e if you want)
-                reply = "Không thể xử lý request lúc này. Vui lòng thử lại."
+app.add_middleware(
+    CORSMiddleware,
+    # chặt chẽ hơn thì chỉ cho http://localhost:3000,5173
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-            # Send response back to client
-            await websocket.send_text(reply)
 
-    except WebSocketDisconnect:
-        print("Client disconnected")
+@app.on_event("startup")
+def startup_event():
+    Base.metadata.create_all(bind=engine)
+
+
+@app.get("/")
+def root():
+    return {"message": "SQLite + SQLAlchemy ready!"}

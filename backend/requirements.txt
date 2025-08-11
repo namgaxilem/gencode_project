@@ -1,2 +1,10 @@
 fastapi 
 uvicorn[standard]
+sqlalchemy
+langgraph
+openai
+langchain
+langchain-openai
+dotenv
+mcp
+langchain-mcp-adapters

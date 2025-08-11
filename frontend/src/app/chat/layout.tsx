@@ -23,8 +23,7 @@ export default function Layout({ children }: any) {
         </div>
       </div>
 
-      {/* Right Panel - Chat Window */}
-      {children}
+      <div className="flex-1">{children}</div>
       {/* <div className="flex-1 flex flex-col">
         <div className="flex-1 p-6 overflow-y-auto">
           {messages.length === 0 ? (
