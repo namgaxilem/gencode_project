@@ -12,6 +12,7 @@ import {
   HelpCircle as HelpCircleIcon,
   FolderKanban,
 } from "lucide-react";
+import { useParams, usePathname } from "next/navigation";
 
 type ChatItem = { id: string; title: string; href: string; date?: string };
 
@@ -27,6 +28,10 @@ export default function AppLayout({
   user = { name: "Nam Nguyen", plan: "Personal Plan" },
 }: LayoutProps) {
   const [open, setOpen] = useState(true);
+  const params = useParams(); // returns { projectId: "123" }
+  const projectId = params?.projectId as string;
+  const pathname = usePathname(); // e.g. "/projects/123"
+  console.log(pathname);
 
   const grouped = useMemo(() => {
     const map = new Map<string, ChatItem[]>();
@@ -49,8 +54,7 @@ export default function AppLayout({
         ].join(" ")}
       >
         <div className="flex h-full flex-col">
-          {/* Logo */}
-          <div className="flex items-center justify-center px-3 pt-4">
+          <Link href="/" className="flex items-center justify-center px-3 pt-4">
             {open ? (
               <div className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -70,7 +74,7 @@ export default function AppLayout({
                 className="h-8 w-8"
               />
             )}
-          </div>
+          </Link>
 
           {/* New project */}
           <Link href="/generate" className="px-3 pt-3">
@@ -113,11 +117,15 @@ export default function AppLayout({
               ) : null}
 
               <ul className="space-y-1">
-                <li>
+                <li
+                  className={`${
+                    Number(projectId) === 1 && "bg-primary-500"
+                  } rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/70`}
+                >
                   <Link
                     href={"/projects/1"}
                     className={[
-                      "group flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800/70",
+                      "group flex items-center gap-2 rounded-lg px-2 py-2",
                       open ? "" : "justify-center",
                     ].join(" ")}
                   >
@@ -139,6 +147,7 @@ export default function AppLayout({
           <div className="px-2">
             <nav className="space-y-1.5 py-2">
               <SidebarLink
+                active={pathname.startsWith("/settings")}
                 open={open}
                 href="/settings"
                 icon={
@@ -245,16 +254,19 @@ function SidebarLink({
   href,
   icon,
   children,
+  active,
 }: {
   open: boolean;
   href: string;
   icon: React.ReactNode;
   children: React.ReactNode;
+  active: boolean;
 }) {
   return (
     <Link
       href={href}
       className={[
+        active ? "bg-primary-500" : "",
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm",
         "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800/70",
         open ? "" : "justify-center",

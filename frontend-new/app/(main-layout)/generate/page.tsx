@@ -294,7 +294,11 @@ export default App;`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <TopHeader />
+      <TopHeader>
+        <div className="flex w-full h-full items-center justify-center">
+          Get started with website builder
+        </div>
+      </TopHeader>
 
       <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* Progress Steps */}

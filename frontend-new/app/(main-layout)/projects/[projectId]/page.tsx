@@ -34,15 +34,8 @@ export default function Page({}: Props) {
   return (
     <>
       <TopHeader>
-        <div className="mx-auto flex h-full max-w-full items-center px-3">
-          {/* left: lock + title */}
-          <div className="flex items-center gap-2 text-sm">
-            <LockClosedIcon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-            <span className="font-medium text-neutral-800 dark:text-neutral-100">
-              {/* {title} */}
-            </span>
-            <ChevronDownIcon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-          </div>
+        <div className="relative mx-auto flex h-full max-w-full justify-between items-center px-3">
+          <div className="absolute left-1/2 -translate-x-1/2">projectname</div>
 
           {/* right controls */}
           <div className="ml-auto flex items-center gap-2">
