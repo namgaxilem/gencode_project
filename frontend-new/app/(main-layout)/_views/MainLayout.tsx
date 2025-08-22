@@ -27,7 +27,7 @@ export default function AppLayout({
   chats = [],
   user = { name: "Nam Nguyen", plan: "Personal Plan" },
 }: LayoutProps) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const params = useParams(); // returns { projectId: "123" }
   const projectId = params?.projectId as string;
   const pathname = usePathname(); // e.g. "/projects/123"
