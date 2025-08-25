@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI (uvicorn, no reload)",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "run_code_agent.app.main.main:app",   // import path : variable
+        "--host", "0.0.0.0",
+        "--port", "8000"
+      ],
+      "jinja": true,
+      "justMyCode": true
+    },
+    {
+      "name": "FastAPI (uvicorn, reload via debugpy attach)",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "run_code_agent.app.main.main:app",
+        "--host", "0.0.0.0",
+        "--port", "8000",
+        "--reload"
+      ],
+      "jinja": true,
+      "justMyCode": true
+    }
+  ]
+}

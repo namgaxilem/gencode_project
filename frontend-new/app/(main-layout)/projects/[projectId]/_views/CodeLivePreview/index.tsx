@@ -111,7 +111,11 @@ export default function CodeLivePreview({
 
           <Dropdown menu={{ items, onClick: onMenuClick }} trigger={["click"]}>
             <Tooltip title={`Device: ${preset}`}>
-              <Button size="small" type="text" icon={preset === "mobile" ? <MobileIcon /> : <DesktopIcon />} />
+              <Button
+                size="small"
+                type="text"
+                icon={preset === "mobile" ? <MobileIcon /> : <DesktopIcon />}
+              />
             </Tooltip>
           </Dropdown>
 
@@ -121,14 +125,12 @@ export default function CodeLivePreview({
                 size="small"
                 type="text"
                 icon={<ExternalLinkIcon />}
-                onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+                onClick={() =>
+                  window.open(url, "_blank", "noopener,noreferrer")
+                }
               />
             </Tooltip>
           )}
-
-          <Tooltip title="More">
-            <Button size="small" type="text" icon={<DotsHorizontalIcon />} />
-          </Tooltip>
         </div>
       </div>
 
