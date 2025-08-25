@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
-import { Button, Tooltip, Dropdown } from "antd";
-import type { MenuProps } from "antd";
 import {
-  ReloadIcon,
-  ExternalLinkIcon,
   DesktopIcon,
+  ExternalLinkIcon,
   MobileIcon,
-  DotsHorizontalIcon,
+  ReloadIcon,
 } from "@radix-ui/react-icons";
+import type { MenuProps } from "antd";
+import { Button, Dropdown, Tooltip } from "antd";
+import { useMemo, useState } from "react";
+import { useWorkspace } from "../WorkspaceProvider";
 
 type DevicePreset = "desktop" | "tablet" | "mobile";
 
@@ -31,12 +31,13 @@ type CodeLivePreviewProps = {
  * Defaults to previewing http://localhost:3000.
  */
 export default function CodeLivePreview({
-  url = "http://localhost:3000",
   srcDoc,
   initialPreset = "desktop",
   toolbarHeight = 44,
   className = "",
 }: CodeLivePreviewProps) {
+  const { previewUrl } = useWorkspace();
+  console.log(111, previewUrl);
   // force re-render iframe to reload
   const [frameKey, setFrameKey] = useState<number>(Date.now());
   const [preset, setPreset] = useState<DevicePreset>(initialPreset);
@@ -94,7 +95,7 @@ export default function CodeLivePreview({
             className="h-8 flex items-center px-3 rounded-lg border bg-neutral-50/60 dark:bg-neutral-800/50
                        border-neutral-200 dark:border-neutral-700 text-[12px] font-mono text-neutral-600 dark:text-neutral-300"
           >
-            {srcDoc ? "(preview.html)" : url}
+            {srcDoc ? "(preview.html)" : previewUrl}
           </div>
         </div>
 
@@ -126,7 +127,11 @@ export default function CodeLivePreview({
                 type="text"
                 icon={<ExternalLinkIcon />}
                 onClick={() =>
-                  window.open(url, "_blank", "noopener,noreferrer")
+                  window.open(
+                    previewUrl || "about:blank",
+                    "_blank",
+                    "noopener,noreferrer"
+                  )
                 }
               />
             </Tooltip>
@@ -135,16 +140,16 @@ export default function CodeLivePreview({
       </div>
 
       {/* Preview area */}
-      <div className="flex-1 overflow-hidden p-2">
+      <div className="flex-1 overflow-hidden p-0">
         <div
-          className="h-full w-full bg-neutral-100 dark:bg-neutral-950 rounded-xl shadow-inner border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+          className="h-full w-full bg-neutral-100 dark:bg-neutral-950 shadow-inner border border-neutral-200 dark:border-neutral-800 overflow-hidden"
           style={{ width: widthPx }}
         >
           <iframe
             key={frameKey}
             title="code-live-preview"
             className="w-full h-full"
-            src={srcDoc ? undefined : url}
+            src={previewUrl || "about:blank"}
             srcDoc={srcDoc}
             sandbox="allow-scripts allow-same-origin allow-forms"
           />
