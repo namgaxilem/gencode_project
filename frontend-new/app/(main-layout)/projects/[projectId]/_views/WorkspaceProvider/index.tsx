@@ -12,6 +12,7 @@ import {
 import { message } from "antd";
 import type { DataNode } from "antd/es/tree";
 import { getFileIcon } from "../VisualCodeMimic/utils";
+import { useParams } from "next/navigation";
 
 type WSAny = Record<string, any>;
 type Item = {
@@ -115,14 +116,38 @@ function itemsToChildNodes(items: Item[]): TreeNode[] {
 function setChildrenForKey(
   tree: TreeNode[],
   key: string,
-  children: TreeNode[]
+  freshChildren: TreeNode[]
 ): TreeNode[] {
   const walk = (nodes: TreeNode[]): TreeNode[] =>
     nodes.map((n) => {
-      if (n.key === key) return { ...n, children };
-      if (n.children?.length) return { ...n, children: walk(n.children) };
+      if (n.key === key) {
+        const prevKids: TreeNode[] = Array.isArray(n.children)
+          ? (n.children as TreeNode[])
+          : [];
+        const prevByKey = new Map(prevKids.map((c) => [c.key, c]));
+
+        const merged: TreeNode[] = freshChildren.map((child) => {
+          const prev = prevByKey.get(child.key);
+          // If this child is a directory and we had its subtree loaded, keep it
+          if (
+            prev &&
+            prev.dataType === "dir" &&
+            Array.isArray(prev.children) &&
+            prev.children.length > 0
+          ) {
+            return { ...child, children: prev.children };
+          }
+          return child;
+        });
+
+        return { ...n, children: merged };
+      }
+      if (Array.isArray(n.children) && n.children.length > 0) {
+        return { ...n, children: walk(n.children as TreeNode[]) };
+      }
       return n;
     });
+
   return walk(tree);
 }
 
@@ -154,6 +179,7 @@ type WorkspaceContextType = {
   fileContent: string;
   setFileContent: (s: string) => void;
   isDirty: boolean;
+  setIsDirty: (s: boolean) => void;
 
   // dev/logs
   startDev: () => Promise<void>;
@@ -176,6 +202,9 @@ export default function WorkspaceProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const { projectId } = useParams<{
+    projectId: string;
+  }>();
   const wsUrl = useMemo(() => computeWsUrl(), []);
   const wsRef = useRef<WebSocket | null>(null);
   const pending = useRef(new Map<string, (msg: WSAny) => void>());
@@ -242,7 +271,14 @@ export default function WorkspaceProvider({
 
     ws.addEventListener("open", () => {
       setConnected(true);
-      ws.send(JSON.stringify({ type: "init", email, req_id: uid() }));
+      ws.send(
+        JSON.stringify({
+          type: "init",
+          email,
+          project_id: projectId,
+          req_id: uid(),
+        })
+      );
     });
 
     ws.addEventListener("message", (ev) => {
@@ -347,6 +383,7 @@ export default function WorkspaceProvider({
   const listImmediate = useCallback(
     async (path: string): Promise<Item[]> => {
       const res = await send({ type: "list_tree", path, max_depth: 0 });
+      console.log(111, res);
       if (res.type !== "list_tree_ok")
         throw new Error(res.message || "list_tree error");
       return (res.items as Item[]) || [];
@@ -356,7 +393,9 @@ export default function WorkspaceProvider({
 
   const loadChildren = useCallback(
     async (parentPath: string) => {
-      if (loadedPathsRef.current.has(parentPath)) return;
+      // if (loadedPathsRef.current.has(parentPath)) {
+      //   return;
+      // }
       try {
         const items = await listImmediate(parentPath);
         const children = itemsToChildNodes(items);
@@ -472,6 +511,7 @@ export default function WorkspaceProvider({
     fileContent,
     setFileContent,
     isDirty,
+    setIsDirty,
     // dev/logs
     startDev,
     stopDev,

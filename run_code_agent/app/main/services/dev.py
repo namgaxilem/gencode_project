@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import WebSocket
 from ..config import DEV_CMD
 from ..utils.paths import find_free_port
-from ..utils.proc import _readline_exec, _readline_popen
+from ..utils.proc import readline_exec, readline_popen
 
 # -- Detect URLs printed by dev servers (Vite/Next/CRA etc.)
 ANSI_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")  # strip ANSI escapes
@@ -122,7 +122,7 @@ async def pump_dev_logs(sess, ws: WebSocket, send_lock: asyncio.Lock):
         proc = sess.dev_proc
         if not proc:
             return
-        reader = _readline_popen if isinstance(proc, subprocess.Popen) else _readline_exec
+        reader = readline_popen if isinstance(proc, subprocess.Popen) else readline_exec
 
         while True:
             line = await reader(proc, timeout=1.0)

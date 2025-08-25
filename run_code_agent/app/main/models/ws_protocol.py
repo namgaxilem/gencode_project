@@ -10,6 +10,7 @@ class WSBase(BaseModel):
 class InitReq(WSBase):
     type: Literal["init"]
     email: str
+    project_id: str
 
 class ListTreeReq(WSBase):
     type: Literal["list_tree"]

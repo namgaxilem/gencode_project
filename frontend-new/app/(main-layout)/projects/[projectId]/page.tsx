@@ -1,24 +1,12 @@
 "use client";
 
 import TopHeader from "@/components/ui/TopHeader";
-import {
-  ChevronDownIcon,
-  GearIcon,
-  LockClosedIcon,
-  MoonIcon,
-  SunIcon,
-} from "@radix-ui/react-icons";
+import { ChevronDownIcon, GearIcon } from "@radix-ui/react-icons";
 import { Button, Dropdown, MenuProps } from "antd";
-import { useParams, useRouter } from "next/navigation";
 import ProjectWorkspaceWrapper from "./_views/ProjectWorkspaceWrapper";
 
 interface Props {}
 export default function Page({}: Props) {
-  const { projectId } = useParams<{
-    projectId;
-  }>();
-  const router = useRouter();
-
   const integrations: MenuProps["items"] = [
     { key: "vercel", label: "Vercel" },
     { key: "github", label: "GitHub" },

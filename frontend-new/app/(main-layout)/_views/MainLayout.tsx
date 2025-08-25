@@ -241,7 +241,7 @@ export default function AppLayout({
 
       {/* Main content (full height) */}
       <main className="h-[100dvh] flex-1 bg-white dark:bg-neutral-950 overflow-auto">
-        <div>{children}</div>
+        {children}
       </main>
     </div>
   );

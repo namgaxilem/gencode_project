@@ -21,3 +21,8 @@ try:
     from watchfiles import awatch, Change  # type: ignore  # noqa:F401
 except Exception:
     WATCH_ENABLED = False
+
+DEFAULT_CLONE_URL = os.getenv(
+    "DEFAULT_CLONE_URL",
+    "https://github.com/namgaxilem/wedding-car.git",
+)

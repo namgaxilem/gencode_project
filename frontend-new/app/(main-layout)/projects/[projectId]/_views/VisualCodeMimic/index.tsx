@@ -1,14 +1,10 @@
 "use client";
 
-import {
-  FileTextIcon,
-  MagnifyingGlassIcon,
-  PlusCircledIcon,
-} from "@radix-ui/react-icons";
-import { Button, Dropdown, Input, message, Tree } from "antd";
+import { FileTextIcon, PlusCircledIcon } from "@radix-ui/react-icons";
+import { Button, Dropdown, message, Tree } from "antd";
 import type { DirectoryTreeProps } from "antd/es/tree/DirectoryTree";
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { guessLang, useWorkspace } from "../WorkspaceProvider";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -20,7 +16,6 @@ export default function VisualCodeMimic() {
   const {
     // connection
     email,
-    setEmail,
     connected,
     // tree + files
     treeData,
@@ -34,6 +29,7 @@ export default function VisualCodeMimic() {
     fileContent,
     setFileContent,
     isDirty,
+    setIsDirty,
     // dev/logs
     startDev,
     stopDev,
@@ -47,28 +43,66 @@ export default function VisualCodeMimic() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // --- Monaco: Ctrl/Cmd + S → writeFile() ---
+  const editorRef = useRef<any>(null);
+  const saveRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    saveRef.current = () => {
+      if (activePath) writeFile();
+    };
+  }, [activePath, writeFile]);
+
+  const onEditorMount = (editor: any, monaco: any) => {
+    editorRef.current = editor;
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () =>
+      saveRef.current()
+    );
+    editor.addAction({
+      id: "file-save",
+      label: "Save",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+      run: () => saveRef.current(),
+    });
+  };
+
+  // optional: suppress browser "Save page" if Monaco focused
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        const node = editorRef.current?.getDomNode?.();
+        if (node && node.contains(document.activeElement)) {
+          e.preventDefault();
+          saveRef.current();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, []);
+
+  // --- New File menu: create file by saving empty content, then open it
   const menuItems = [
     {
       key: "new",
       label: "New File",
       onClick: async () => {
-        const rel = prompt("Path (relative to workspace), e.g. src/new.ts:");
+        const relRaw = prompt("Path (relative to workspace), e.g. src/new.ts:");
+        const rel = (relRaw || "").replace(/^\/+/, "").trim();
         if (!rel) return;
         try {
-          // quick create via write then refresh parent and open
-          const res = await (async () => {
-            // We’ll reuse write endpoint via read/write combo
-            // Minimal inline call: you can also expose createFile() in the provider.
-            try {
-              const wsRes = await (window as any).noop; // placeholder to keep types happy
-            } catch {}
-          })();
-          // Instead, better: expose a `send` helper in provider if needed.
-          message.info(
-            "Use provider.send({type:'write_file', ...}) or add createFile() to provider."
-          );
+          // set active path, empty content, save -> creates file
+          setActivePath(rel);
+          setFileContent("");
+          setIsDirty(true);
+          await writeFile();
+
+          // refresh parent & open file (read again to be safe)
+          const parent = rel.split("/").slice(0, -1).join("/");
+          if (parent) await loadChildren(parent);
+          await readFile(rel);
+          message.success("File created");
         } catch (e: any) {
-          message.error(e.message || "create failed");
+          message.error(e.message || "Create failed");
         }
       },
     },
@@ -86,44 +120,34 @@ export default function VisualCodeMimic() {
   };
 
   return (
-    <div className="w-full h-screen bg-neutral-100 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex flex-col">
+    <div className="w-full h-full min-h-0 bg-neutral-100 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex flex-col">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-neutral-200/70 dark:border-neutral-800/70 bg-white/70 dark:bg-neutral-900/70 backdrop-blur sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <span className="font-semibold">Code Editor</span>
         </div>
-        {/* <div className="flex items-center gap-2">
-          <Input
-            size="small"
-            prefix={<MagnifyingGlassIcon />}
-            placeholder="Email to bind workspace..."
-            className="w-[220px] md:w-[280px]"
-            value={email}
-            onChange={(e) => setEmail(e.target.value.trim())}
-            onPressEnter={() => connected && loadChildren("")}
-          />
-          <Button size="small" onClick={() => connected && loadChildren("")}>
-            Bind
-          </Button>
-        </div> */}
       </div>
 
       {/* Main area */}
       <div
-        className="flex-1 grid"
-        style={{ gridTemplateColumns: "280px 1fr", minHeight: 0 }}
+        className="flex-1 grid min-h-0"
+        style={{ gridTemplateColumns: "280px 1fr" }}
       >
         {/* Explorer */}
-        <div className="border-r border-neutral-200 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 p-2 sm:p-3 overflow-auto">
+        <div className="min-w-0 overflow-hidden border-r border-neutral-200 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/60 p-2 sm:p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-[12px] uppercase tracking-wide text-neutral-500">
               Explorer
             </div>
-            <Dropdown menu={{ items: menuItems }} trigger={["click"]}>
-              <Button size="small" icon={<PlusCircledIcon />}>
-                New
-              </Button>
-            </Dropdown>
+
+            <div>
+              <Button onClick={() => loadChildren("")}>Refresh</Button>
+              <Dropdown menu={{ items: menuItems }} trigger={["click"]}>
+                <Button size="small" icon={<PlusCircledIcon />}>
+                  New
+                </Button>
+              </Dropdown>
+            </div>
           </div>
 
           <DirectoryTree
@@ -140,9 +164,9 @@ export default function VisualCodeMimic() {
         </div>
 
         {/* Right Pane: Editor + Dev controls + Logs */}
-        <div className="flex flex-col" style={{ minHeight: 0 }}>
+        <div className="min-w-0 overflow-hidden flex flex-col min-h-0">
           {/* Editor */}
-          <div className="flex-1 p-0 overflow-hidden" style={{ minHeight: 0 }}>
+          <div className="flex-1 p-0 overflow-hidden min-h-0">
             <div className="h-full w-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col min-h-0">
               {!activePath ? (
                 <div className="flex-1 grid place-items-center text-neutral-500 text-sm px-6">
@@ -168,16 +192,17 @@ export default function VisualCodeMimic() {
                       </Button>
                     </div>
                   </div>
-                  <div className="flex-1 overflow-auto">
+
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     <MonacoEditor
                       key={activePath}
                       path={activePath || "untitled"}
                       language={guessLang(activePath)}
                       value={fileContent}
+                      onMount={onEditorMount}
                       onChange={(v) => {
                         setFileContent(v ?? "");
-                        // mark dirty (provider exposes setter)
-                        // alternatively: expose setIsDirty in provider if you want fine control
+                        setIsDirty(true);
                       }}
                       options={{
                         fontSize: 13,
